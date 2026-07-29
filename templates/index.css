@@ -1,0 +1,73 @@
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(59, 130, 246, 0.03) 0px, transparent 50%),
+    radial-gradient(at 90% 10%, rgba(239, 68, 68, 0.02) 0px, transparent 50%),
+    radial-gradient(at 50% 80%, rgba(147, 51, 234, 0.01) 0px, transparent 50%);
+}
+
+.font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 1);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 1);
+}
+
+/* Card transitions and shadows */
+.shadow-premium {
+  box-shadow: 0 4px 20px -2px rgba(148, 163, 184, 0.08), 0 2px 8px -1px rgba(148, 163, 184, 0.04);
+}
+
+.shadow-premium-hover {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.shadow-premium-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(148, 163, 184, 0.12), 0 4px 12px -2px rgba(148, 163, 184, 0.06);
+}
+
+/* Typing indicator animation */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.dot-bounce {
+  animation: bounce 1.2s infinite ease-in-out;
+}
+.dot-bounce:nth-child(2) { animation-delay: 0.2s; }
+.dot-bounce:nth-child(3) { animation-delay: 0.4s; }
+
+/* Scoreboard custom elements */
+.score-progress-bar {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+  height: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.score-progress-bar-fill {
+  background-color: #2563eb;
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.8s ease-out;
+}

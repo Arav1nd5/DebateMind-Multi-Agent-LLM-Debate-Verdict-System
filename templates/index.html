@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DebateMind - High-Reasoning Multi-Agent Debate System</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Outfit & Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Marked for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- jsPDF CDN for in-browser PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-[#f8fafc] text-slate-800 min-h-screen pb-16 font-inter">
+
+  <!-- DebateMind Top Header Navigation -->
+  <header class="w-full bg-white border-b border-slate-200 sticky top-0 z-50 py-4 px-8">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-2 cursor-pointer" onclick="resetDebate()">
+        <span class="text-xl font-bold font-outfit text-slate-900 tracking-tight flex items-center gap-1.5">
+          <i data-lucide="scale" class="w-5 h-5 text-blue-600"></i> DebateMind
+        </span>
+      </div>
+      <!-- Header Download Button (Hidden until debate completes) -->
+      <button id="header-download-btn" onclick="generatePDFReport()" class="hidden items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg text-xs font-semibold font-outfit transition-all cursor-pointer">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i> Download PDF Report
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 mt-8">
+    
+    <!-- Setup Case Topic View (Home/Empty State) -->
+    <div id="setup-container" class="max-w-xl mx-auto mt-16 bg-white p-8 rounded-2xl border border-slate-200 shadow-md space-y-6">
+      <div class="text-center space-y-2">
+        <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto border border-blue-100">
+          <i data-lucide="gavel" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-xl font-bold font-outfit text-slate-900">New Comparative Query</h2>
+        <p class="text-xs text-slate-500">Provide two competing technologies, architectures, or algorithms to convene the debate.</p>
+      </div>
+
+      <form id="debateForm" class="space-y-5">
+        <!-- Comparative Query Input -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+            Case Query / Comparison Topic
+          </label>
+          <input 
+            type="text" 
+            id="debate_query" 
+            required 
+            placeholder="e.g., Which suits better for backend: Python or Java?" 
+            class="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all"
+          >
+        </div>
+
+        <!-- Webhook URL Input -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+            Webhook URL (Optional)
+          </label>
+          <input 
+            type="url" 
+            id="webhook_url" 
+            placeholder="e.g., https://your-server.com/webhook" 
+            class="w-full bg-slate-50 border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-xl p-3.5 text-sm text-slate-800 placeholder-slate-400 outline-none transition-all"
+          >
+        </div>
+
+        <!-- Context File Upload -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+            Context File (Code, PDF, DOCX, Image)
+          </label>
+          <div class="relative group cursor-pointer border border-dashed border-slate-300 hover:border-blue-500 transition-all rounded-xl p-6 bg-slate-50 text-center">
+            <input 
+              type="file" 
+              id="file" 
+              class="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+              onchange="updateFileName(this)"
+            >
+            <i data-lucide="upload-cloud" class="w-8 h-8 text-slate-400 group-hover:text-blue-500 mx-auto mb-2 transition-colors"></i>
+            <span id="file-name" class="block text-xs text-slate-500 group-hover:text-slate-700 transition-colors font-medium">
+              Drag and drop or click to upload
+            </span>
+            <span class="block text-[10px] text-slate-400 mt-1">Accepts code, PDFs, DOCX, or Images</span>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          id="submit-btn" 
+          class="w-full py-4 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold font-outfit rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer text-sm"
+        >
+          <i data-lucide="play" class="w-4 h-4"></i> Start Debate
+        </button>
+      </form>
+    </div>
+
+    <!-- Active Debate View (Single Column Scrollable Layout) -->
+    <div id="active-debate-container" class="hidden space-y-12 pb-24">
+      
+      <!-- Large Dynamic Topic Title Header -->
+      <div class="text-center space-y-3 mt-6">
+        <span class="inline-block text-[10px] font-bold font-outfit uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100 px-3 py-1 rounded-full">
+          ACTIVE DEBATE QUERY
+        </span>
+        <h2 id="active-query-title" class="text-3xl font-extrabold font-outfit text-slate-900 tracking-tight max-w-3xl mx-auto leading-tight">
+          Which suits better for backend: Python or Java?
+        </h2>
+        <div class="w-16 h-1 bg-blue-600 mx-auto rounded-full"></div>
+      </div>
+
+      <!-- Rounds Container (Round 1, Round 2, Round 3 rendered vertically) -->
+      <div id="rounds-container" class="space-y-16">
+        <!-- Rendered dynamically by index.js -->
+      </div>
+
+      <!-- Final Verdict / Judge's Conclusion (Dark bottom panel) -->
+      <div id="conclusion-container" class="hidden bg-[#0b0f19] text-white p-8 md:p-10 rounded-2xl shadow-2xl border border-slate-800 relative overflow-hidden">
+        <div class="absolute top-0 right-0 p-8 opacity-[0.02] select-none pointer-events-none">
+          <i data-lucide="award" class="w-64 h-64"></i>
+        </div>
+        
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+          <div class="flex items-center gap-3">
+            <div class="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
+              <i data-lucide="gavel" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h4 class="text-xs uppercase tracking-wider text-slate-400 font-semibold font-outfit">Official Case Verdict</h4>
+              <h3 id="conclusion-winner" class="text-xl font-bold font-outfit text-white">Judge's Conclusion</h3>
+            </div>
+          </div>
+          <span class="text-[10px] font-bold font-outfit uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full">
+            SYNTHESIS COMPLETE: 3/3 ROUNDS CONCLUDED
+          </span>
+        </div>
+
+        <!-- Two Column Content Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 mt-8">
+          <!-- Left Column: Recommendation -->
+          <div class="md:col-span-7 space-y-6">
+            <div>
+              <h5 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Contextual Recommendation</h5>
+              <p id="conclusion-summary" class="text-sm text-slate-300 leading-relaxed font-light font-outfit">
+                <!-- Final Verdict Summary text -->
+              </p>
+            </div>
+            
+            <button onclick="generatePDFReport()" class="py-3 px-5 bg-blue-600 hover:bg-blue-700 text-white font-semibold font-outfit text-xs rounded-xl transition-all shadow-md active:scale-[0.98] flex items-center gap-2 cursor-pointer">
+              <i data-lucide="download" class="w-4 h-4"></i> Download Full Synthesis Report
+            </button>
+          </div>
+
+          <!-- Right Column: Scoreboard Progress Bars -->
+          <div class="md:col-span-5 space-y-6">
+            <div>
+              <h5 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-4">Final Scoreboard</h5>
+              <div id="conclusion-scoreboard" class="space-y-4">
+                <!-- Scoreboard rows filled dynamically -->
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800/60">
+              <a href="#" onclick="resetDebate(); return false;" class="text-xs font-semibold text-slate-400 hover:text-white transition-colors flex items-center gap-1">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> New Comparative Query
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ===== WebSocket Error Toast (injected by webhook() in index.js) ===== -->
+  <div id="ws-error-toast"
+       class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999]
+              flex items-start gap-3 max-w-md w-full
+              bg-red-950 border border-red-700 text-red-100
+              rounded-2xl shadow-2xl px-5 py-4 font-outfit"
+       role="alert" aria-live="assertive">
+    <!-- Icon -->
+    <div class="flex-shrink-0 mt-0.5">
+      <i id="ws-error-icon" data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i>
+    </div>
+    <!-- Text -->
+    <div class="flex-grow min-w-0">
+      <p id="ws-error-title" class="text-sm font-bold text-red-200 leading-tight"></p>
+      <p id="ws-error-body"  class="text-xs text-red-300 mt-1 leading-relaxed break-words"></p>
+      <p id="ws-error-step"  class="text-[10px] text-red-500 mt-1 uppercase tracking-wider font-semibold"></p>
+    </div>
+    <!-- Dismiss -->
+    <button onclick="dismissWsErrorToast()"
+            class="flex-shrink-0 text-red-400 hover:text-red-200 transition-colors mt-0.5 cursor-pointer"
+            aria-label="Dismiss">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <script src="/index.js"></script>
+</body>
+</html>
