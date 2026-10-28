@@ -24,8 +24,8 @@ A multi-agent AI debate system that pits two competing technologies, architectur
 ### 1. Clone the repo
 
 ```bash
-git clone <repo-url>
-cd debate-main
+git clone https://github.com/Arav1nd5/DebateMind-Multi-Agent-LLM-Debate-Verdict-System.git
+cd DebateMind-Multi-Agent-LLM-Debate-Verdict-System
 ```
 
 ### 2. Create a virtual environment
@@ -53,6 +53,8 @@ Create a `.env` file in the project root (same folder as `run.py`):
 GROQ_API_KEY=your_groq_api_key_here
 PORT=5000
 FLASK_DEBUG=True
+DEBATER_MODEL=openai/gpt-oss-20b
+JUDGE_MODEL=openai/gpt-oss-120b
 ```
 
 | Variable | Required | Description |
@@ -60,6 +62,8 @@ FLASK_DEBUG=True
 | `GROQ_API_KEY` | ✅ Yes | Your Groq API key |
 | `PORT` | No | Port to run the server on (default: `5000`) |
 | `FLASK_DEBUG` | No | Enable debug mode (default: `True`) |
+| `DEBATER_MODEL` | No | Model for debater agents (default: `openai/gpt-oss-20b`) |
+| `JUDGE_MODEL` | No | Model for judge agent (default: `openai/gpt-oss-120b`) |
 
 ### 5. Run the server
 
@@ -92,11 +96,13 @@ The app maintains a live WebSocket connection to the server. If a backend error 
 
 ## Models used
 
-| Role | Model |
-|---|---|
-| Debater agents | `llama-3.1-8b-instant` |
-| Judge agent | `llama-3.3-70b-versatile` |
-| Vision (image context) | `llama-3.2-11b-vision-instruct` |
+| Role | Model | Parameters | Purpose |
+|---|---|---|---|
+| Debater agents | `openai/gpt-oss-20b` | 20B | Fast, high-throughput argument generation for each debate round |
+| Judge agent | `openai/gpt-oss-120b` | 120B | Deep comparative reasoning, neutral critique, and final verdict scoring |
+| Vision (image context) | `openai/gpt-oss-20b` | 20B | Extracting textual context from uploaded images |
+
+> **Model selection rationale:** The debaters use a lightweight 20B model for rapid multi-turn argument generation, while the judge uses a high-capacity 120B model at low temperature (0.2) to ensure strict neutrality, rigorous multi-factor evaluation, and structured JSON adherence across all three rounds.
 
 All models run via the [Groq](https://groq.com) inference API.
 
